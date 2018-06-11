@@ -1,3 +1,3 @@
 #!/bin/bash
 
-ln -s src/run.py deNSF.py
+ln -s src/process.py deNSF
