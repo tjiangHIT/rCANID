@@ -30,9 +30,9 @@ def parse_alignment(path):
 		read_qual = seq[10]
 
 		if read_flag == '4':
-			print read_name
+			print '@'+read_name
 			print read_seq
-			print '+'
+			print '+'+read_name
 			print read_qual
 			# break
 	file.close()
