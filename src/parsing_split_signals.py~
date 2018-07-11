@@ -132,7 +132,7 @@ def parse_read(read, Chr_name, low_bandary):
 			# MEI_contig = read.query_sequence[_shift_read_ - element[1]:_shift_read_]
 
 			# INS_ME_pos.append([pos_start + shift, element[1], MEI_contig])
-			INS_ME_pos.append([pos_start + shift, element[1]])
+			INS_ME_pos.append([Chr_name, pos_start + shift, element[1]])
 
 			# print read.query_name, "I", pos_start + shift
 			# print MEI_contig
@@ -179,145 +179,11 @@ def parse_read(read, Chr_name, low_bandary):
 				for k in overlap:
 					# print k
 					# MEI_contig = read.query_sequence[k[0]:k[1]]
-					INS_ME_pos.append([k[2], k[1] - k[0]])
+					INS_ME_pos.append([Chr_name, k[2], k[1] - k[0]])
 
 	return INS_ME_pos
 
-def acquire_clip_locus(down, up, chr):
-	list_clip = list()
-	if int(up/10000) == int(down/10000):
-		key_1 = int(down/10000)
-		if key_1 not in CLIP_note[chr]:
-			return list_clip
-		for i in xrange(int((up%10000)/50)-int((down%10000)/50)+1):
-			# exist a bug ***********************************
-			key_2 = int((down%10000)/50)+i
-			if key_2 not in CLIP_note[chr][key_1]:
-				continue
-			for ele in CLIP_note[chr][key_1][key_2]:
-				if ele[0] >= down and ele[0] <= up:
-					list_clip.append(ele)
-	else:
-		key_1 = int(down/10000)
-		if key_1 in CLIP_note[chr]:
-			for i in xrange(200-int((down%10000)/50)):
-				# exist a bug ***********************************
-				key_2 = int((down%10000)/50)+i
-				if key_2 not in CLIP_note[chr][key_1]:
-					continue
-				for ele in CLIP_note[chr][key_1][key_2]:
-					if ele[0] >= down and ele[0] <= up:
-						list_clip.append(ele)
-		key_1 += 1
-		if key_1 not in CLIP_note[chr]:
-			return list_clip
-		for i in xrange(int((up%10000)/50)+1):
-			# exist a bug ***********************************
-			key_2 = i
-			if key_2 not in CLIP_note[chr][key_1]:
-				continue
-			for ele in CLIP_note[chr][key_1][key_2]:
-				if ele[0] >= down and ele[0] <= up:
-					list_clip.append(ele)
-	return list_clip
-
-def construct_concensus_info(Ins_list, Clip_list, evidence_read, SV_size):
-	total_count = len(Ins_list) + len(Clip_list)
-	if total_count < evidence_read:
-		return 0
-	breakpoint = list()
-	insert_size = list()
-
-	boundary = list()
-
-	for i in Ins_list:
-		breakpoint.append(i[0])
-		insert_size.append(i[1])
-		# boundary.append(i[0])
-	for i in Clip_list:
-		# boundary.append(i[0])
-		if i[1] == 1:
-			breakpoint.append(i[0])
-
-	# ==============method_1=====================
-	# Prob_pos_1 = Counter(breakpoint).most_common(1)[0][0]
-	# ==============method_2=====================
-	Prob_pos_2 = sum(breakpoint)/len(breakpoint)
-	Average_size = int(sum(insert_size)/len(insert_size))
-
-	if Average_size < SV_size:
-		return 0
-
-	# # print Average_size
-	# local_info = list()
-	# # local_name = "_%d_%d_"%(Prob_pos_2, Average_size)
-	# local_name = [Prob_pos_2, Average_size]
-	# local_id = 0
-	# for i in Ins_list:
-	# 	# info = local_name + str(local_id) + '\n' + i[2] + '\n'
-	# 	info = local_name + [str(local_id), i[2]]
-	# 	# info = local_name + ["%d:%d:%d"%(local_id, min(boundary), max(boundary)), i[2]]
-	# 	local_id += 1
-	# 	local_info.append(info)
-	# for i in Clip_list:
-	# 	# info = local_name + str(local_id) + '\n' + i[1] + '\n'
-	# 	info = local_name + [str(local_id), i[1]]
-	# 	# info = local_name + ["%d:%d:%d"%(local_id, min(boundary), max(boundary)), i[1]]
-	# 	local_id += 1
-	# 	local_info.append(info)
-	# 		# print(">%d\n%s"%(i[0], i[2])) 
-
-	# # for i in local_info:
-	# # 	print i
-
-	return [Prob_pos_2, Average_size, total_count]
-
-def merge_pos(pos_list, chr, evidence_read, SV_size):
-	start = list()
-	end = list()
-	for ele in pos_list:
-		start.append(ele[0])
-		end.append(ele[0] + ele[1])
-
-	search_down = min(start) - 10
-	search_up = max(start) + 10
-
-	temp_clip = acquire_clip_locus(search_down, search_up, chr)
-	# temp_clip = list()
-	# gc.collect()
-
-	# concensus, ref_pos = construct_concensus_seq(pos_list, temp_clip)
-	result = construct_concensus_info(pos_list, temp_clip, evidence_read, SV_size)
-
-	if result != 0:
-		# for i in xrange(len(result)):
-		# 	# result[i] = ">INS_" + chr + result[i]
-		# 	result[i] = ["INS", chr] + result[i] + [len(result)]
-		return result
-	else:
-		return 0
-
-def cluster(pos_list, chr, evidence_read, SV_size, low_bandary):
-	_cluster_ = list()
-	temp = list()
-	temp.append(pos_list[0])
-	for pos in pos_list[1:]:
-		# if temp[-1][0] + temp[-1][1] < pos[0]:
-		if temp[-1][0] + low_bandary < pos[0]:
-			result = merge_pos(temp, chr, evidence_read, SV_size)
-			if result != 0:
-				_cluster_.append(result)
-			temp = list()
-			temp.append(pos)
-		else:
-			temp.append(pos)
-	result = merge_pos(temp, chr, evidence_read, SV_size)
-	if result != 0:
-		_cluster_.append(result)
-	# _cluster_.append(merge_pos(temp, chr))
-	return _cluster_
-
-def load_sam(sam_path):
+def load_sam(sam_path, ):
 	'''
 	Load_BAM_File
 	library:	pysam.AlignmentFile
@@ -351,30 +217,53 @@ def load_sam(sam_path):
 			feed_back = parse_read(read, Chr_name, 50)
 
 			if len(feed_back) > 0:
-				# print read.query_name
+				print read.query_name
 				for i in feed_back:
-					# print i
+					print i
 					cluster_pos_INS.append(i)
-				# break
-			# if len(feed_back_del) > 0:
-			# 	for i in feed_back_del:
-			# 		cluster_pos_DEL.append(i)
-		# while not CLIP_note[Chr_name].empty():
-		# 	print Chr_name, CLIP_note[Chr_name].get()
-		# print CLIP_note[Chr_name][6]
-		cluster_pos_INS = sorted(cluster_pos_INS, key = lambda x:x[0])
-		# cluster_pos_DEL = sorted(cluster_pos_DEL, key = lambda x:x[0])
-		if len(cluster_pos_INS) == 0:
-			Cluster_INS = list()
-		else:
-			# for i in cluster_pos_INS:
-			# 	print i
-			Cluster_INS = cluster(cluster_pos_INS, Chr_name, 5, 50, 30)
+				break
+	# 		# if len(feed_back_del) > 0:
+	# 		# 	for i in feed_back_del:
+	# 		# 		cluster_pos_DEL.append(i)
+	# 	# while not CLIP_note[Chr_name].empty():
+	# 	# 	print Chr_name, CLIP_note[Chr_name].get()
+	# 	# print CLIP_note[Chr_name][6]
+	# 	cluster_pos_INS = sorted(cluster_pos_INS, key = lambda x:x[0])
+	# 	# cluster_pos_DEL = sorted(cluster_pos_DEL, key = lambda x:x[0])
+	# 	if len(cluster_pos_INS) == 0:
+	# 		Cluster_INS = list()
+	# 	else:
+	# 		Cluster_INS = cluster(cluster_pos_INS, Chr_name, evidence_read, SV_size)
 
-		for i in Cluster_INS:
-			print Chr_name, i
+	# 	# if len(cluster_pos_DEL) == 0:
+	# 	# 	Cluster_DEL = list()
+	# 	# else:
+	# 	# 	Cluster_DEL = cluster_del(cluster_pos_DEL, Chr_name, Ref)
 
-		logging.info("%d INS signal loci in the chromsome %s."%(len(Cluster_INS), Chr_name))
+	# 	logging.info("%d INS signal loci in the chromsome %s."%(len(Cluster_INS), Chr_name))
+
+	# 	# print Cluster_DEL
+	# 	# merge_siganl(Chr_name, Cluster)
+	# 	# break
+
+	# 	# merge step
+	# 	# Final_result = combine_result(add_genotype(Cluster_INS, samfile), add_genotype(Cluster_DEL,samfile))
+
+	# 	# print Final_result
+
+	# 	# out_signal = open(p2, 'a+')
+	# 	# for i in Final_result:
+	# 	# 	for j in i:
+	# 	# 		out_signal.write(j)
+	# 	# out_signal.close()
+
+	# 	# path = p2+Chr_name+'.fa'
+	# 	# SeqIO.write(Final_result, path, "fasta")
+
+	# # out_signal = open(p2, 'w')
+	# # for i in total_signal:
+	# # 	out_signal.write(i)
+	# # out_signal.close()
 	samfile.close()
 
 if __name__ == '__main__':

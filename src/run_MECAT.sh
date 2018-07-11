@@ -24,11 +24,11 @@
 
 #!/bin/bash
 
-FASTQ="ecoli_filtered"
+FASTQ=$1
 genome_size=4800000
 memory=40
 threads=16
-coverage=10
+coverage=25
 prefix="nonmapped"
 directory="nonmapped"
 #setformat=$7
