@@ -83,12 +83,12 @@ def detect_flag(Flag):
 	else:
 		return 0
 
-def store_clip_pos(locus, chr, flag):
+def store_clip_pos(locus, chr, flag, name):
 	# about collecting breakpoint from clipping 
 	hash_1 = int(locus /10000)
 	mod = locus % 10000
 	hash_2 = int(mod / 50)
-	element = [locus, flag]
+	element = [locus, flag, name]
 
 	if hash_1 not in CLIP_note[chr]:
 		CLIP_note[chr][hash_1] = dict()
@@ -107,6 +107,8 @@ def parse_read(read, Chr_name, low_bandary):
 			2.Supplementary mapping
 			3.Seq
 	'''
+
+	# print read.query_name
 
 	INS_ME_pos = list()
 
@@ -132,7 +134,11 @@ def parse_read(read, Chr_name, low_bandary):
 			# MEI_contig = read.query_sequence[_shift_read_ - element[1]:_shift_read_]
 
 			# INS_ME_pos.append([pos_start + shift, element[1], MEI_contig])
-			INS_ME_pos.append([pos_start + shift, element[1]])
+
+			# [the breakpoint on reference]
+			# [the insertion size]
+			# [the read name] 
+			INS_ME_pos.append([pos_start + shift, element[1], read.query_name])
 
 			# print read.query_name, "I", pos_start + shift
 			# print MEI_contig
@@ -148,7 +154,7 @@ def parse_read(read, Chr_name, low_bandary):
 				if shift == 0:
 					clip_pos = pos_start - 1
 					# clip_contig = read.query_sequence[:element[1]]
-					store_clip_pos(clip_pos, Chr_name, 0)
+					store_clip_pos(clip_pos, Chr_name, 0, read.query_name)
 
 					# primary_clip_0 = element[1]
 					# left clip size
@@ -157,7 +163,7 @@ def parse_read(read, Chr_name, low_bandary):
 					clip_pos = pos_start + shift - 1
 					# primary_clip = read.query_length - element[1]
 					# clip_contig = read.query_sequence[read.query_length - element[1]:]
-					store_clip_pos(clip_pos, Chr_name, 1)
+					store_clip_pos(clip_pos, Chr_name, 1, read.query_name)
 
 					# primary_clip_1 = read.query_length - element[1]
 					# right clip size
@@ -179,7 +185,10 @@ def parse_read(read, Chr_name, low_bandary):
 				for k in overlap:
 					# print k
 					# MEI_contig = read.query_sequence[k[0]:k[1]]
-					INS_ME_pos.append([k[2], k[1] - k[0]])
+					# [the breakpoint on reference]
+					# [the insertion size]
+					# [the read name] 
+					INS_ME_pos.append([k[2], k[1] - k[0], read.query_name])
 
 	return INS_ME_pos
 
@@ -222,7 +231,16 @@ def acquire_clip_locus(down, up, chr):
 	return list_clip
 
 def construct_concensus_info(Ins_list, Clip_list, evidence_read, SV_size):
-	total_count = len(Ins_list) + len(Clip_list)
+	# total_count = len(Ins_list) + len(Clip_list)
+	unique_read = dict()
+	for i in Ins_list:
+		if i[2] not in unique_read:
+			unique_read[i[2]] = 0
+	for i in Clip_list:
+		if i[2] not in unique_read:
+			unique_read[i[2]] = 0
+	total_count = len(unique_read)
+
 	if total_count < evidence_read:
 		return 0
 	breakpoint = list()
@@ -269,8 +287,10 @@ def construct_concensus_info(Ins_list, Clip_list, evidence_read, SV_size):
 
 	# # for i in local_info:
 	# # 	print i
-
-	return [Prob_pos_2, Average_size, total_count]
+	read_list = list()
+	for key in unique_read:
+		read_list.append(key)
+	return [Prob_pos_2, Average_size, total_count, read_list]
 
 def merge_pos(pos_list, chr, evidence_read, SV_size):
 	start = list()
@@ -317,7 +337,7 @@ def cluster(pos_list, chr, evidence_read, SV_size, low_bandary):
 	# _cluster_.append(merge_pos(temp, chr))
 	return _cluster_
 
-def load_sam(sam_path):
+def load_sam(sam_path, out_path):
 	'''
 	Load_BAM_File
 	library:	pysam.AlignmentFile
@@ -334,11 +354,13 @@ def load_sam(sam_path):
 	# print(samfile.get_index_statistics())
 	contig_num = len(samfile.get_index_statistics())
 	# print contig_num
-	logging.info("The total number of chromsomes: %d"%(contig_num))
+	# logging.info("The total number of chromsomes: %d"%(contig_num))
+	print("The total number of chromsomes: %d"%(contig_num))
 	# Acquire_Chr_name
 	for _num_ in xrange(contig_num):
 		Chr_name = samfile.get_reference_name(_num_)
-		logging.info("Resolving the chromsome %s."%(Chr_name))
+		# logging.info("Resolving the chromsome %s."%(Chr_name))
+		print("Resolving the chromsome %s."%(Chr_name))
 		# Chr_length = samfile.lengths[_num_]
 		if Chr_name not in CLIP_note:
 			# CLIP_note[Chr_name] = [0] * Chr_length
@@ -371,11 +393,20 @@ def load_sam(sam_path):
 			# 	print i
 			Cluster_INS = cluster(cluster_pos_INS, Chr_name, 5, 50, 30)
 
-		for i in Cluster_INS:
-			print Chr_name, i
+		print("%d INS signal loci in the chromsome %s."%(len(Cluster_INS), Chr_name))		
 
-		logging.info("%d INS signal loci in the chromsome %s."%(len(Cluster_INS), Chr_name))
+		local_path = "%s_%s.txt"%(out_path, Chr_name)
+		file = open(local_path, 'w')
+		for line in Cluster_INS:
+			# breakpoint = line[0]
+			# sv_size = line[1]
+			# evidence_num = line[2]
+			read_list = "\t".join(line[3])
+			file.write("%d\t%d\t%d\t%s\n"%(line[0], line[1], line[2], read_list))
+		file.close()
+
+		# logging.info("%d INS signal loci in the chromsome %s."%(len(Cluster_INS), Chr_name))
 	samfile.close()
 
 if __name__ == '__main__':
-	load_sam(sys.argv[1])
+	load_sam(sys.argv[1], sys.argv[2])
