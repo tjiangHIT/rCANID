@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 import pysam, sys, argparse
-from pbsuite.utils.FileHandlers import revComp
+# from pbsuite.utils.FileHandlers import revComp
+from string import maketrans
+revComp = maketrans("ATCGNatcgn","TAGCNtagcn")
 
 USAGE="Use pysam to extract fastq sequences from a bam"
 
@@ -16,6 +18,12 @@ parser.add_argument("-F", "--Flag", default=None,
 args = parser.parse_args()
 args.flag = [int(x) for x in args.flag.split(',')] if args.flag is not None else []
 args.Flag = [int(x) for x in args.Flag.split(',')] if args.Flag is not None else []
+
+def revcom_complement(s): 
+    basecomplement = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A', 'N': 'N'} 
+    letters = list(s) 
+    letters = [basecomplement[base] for base in letters] 
+    return ''.join(letters)[::-1]
 
 s = pysam.Samfile(args.BAM)
 
@@ -33,5 +41,6 @@ for read in get:
         
     if read.is_reverse:
         sys.stdout.write("@{0}\n{1}\n+\n{2}\n".format(read.qname, read.seq.translate(revComp)[::-1], read.qual[::-1]))
+        # sys.stdout.write("@{0}\n{1}\n+\n{2}\n".format(read.qname, revcom_complement(read.seq[:]), read.qual[::-1]))
     else:
         sys.stdout.write("@{0}\n{1}\n+\n{2}\n".format(read.qname, read.seq, read.qual))
