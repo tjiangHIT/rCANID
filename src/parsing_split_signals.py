@@ -391,7 +391,7 @@ def load_sam(sam_path, out_path):
 		else:
 			# for i in cluster_pos_INS:
 			# 	print i
-			Cluster_INS = cluster(cluster_pos_INS, Chr_name, 5, 50, 30)
+			Cluster_INS = cluster(cluster_pos_INS, Chr_name, 10, 50, 30)
 
 		print("%d INS signal loci in the chromsome %s."%(len(Cluster_INS), Chr_name))		
 

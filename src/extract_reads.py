@@ -53,7 +53,7 @@ def extract_reads(options):
 # def extract_reads_to_file(id_list, path):
 
 
-def parse_cluster(path, bam_path, out_path):
+def parse_cluster(path, bam_path, out_path, opt):
     # load the bam file
     print("[INFO]: Loading the Bam file.")
     bamfile = pysam.AlignmentFile(bam_path, 'rb')
@@ -73,7 +73,13 @@ def parse_cluster(path, bam_path, out_path):
         breakpoint = seq[1]+'_'+seq[2]
         id_list = seq[3:]
 
-        file_path = "%s%s_%s.fq"%(out_path, chr, breakpoint)
+        if id_list < 10:
+            continue
+
+        if opt == "fq":
+            file_path = "%s%s_%s.fq"%(out_path, chr, breakpoint)
+        else:
+            file_path = "%s%s_%s.fa"%(out_path, chr, breakpoint)
         out_file = open(file_path, 'w')
 
         for name in id_list:
@@ -85,9 +91,16 @@ def parse_cluster(path, bam_path, out_path):
                 iterator = name_indexed.find(name)
                 for read in iterator:
                     if read.is_reverse:
-                        out_file.write("@{0}\n{1}\n+\n{2}\n".format(read.qname, read.seq.translate(revComp)[::-1], read.qual[::-1]))
+                        if opt == 'fq':
+                            out_file.write("@{0}\n{1}\n+\n{2}\n".format(read.qname, read.seq.translate(revComp)[::-1], read.qual[::-1]))
+                        else:
+                            out_file.write(">{0}\n{1}\n".format(read.qname, read.seq.translate(revComp)[::-1]))
+                            # out_file.write("@{0}\n{1}\n+\n{2}\n".format(read.qname, read.seq.translate(revComp)[::-1], read.qual[::-1]))
                     else:
-                        out_file.write("@{0}\n{1}\n+\n{2}\n".format(read.qname, read.seq, read.qual))
+                        if opt == 'fq':
+                            out_file.write("@{0}\n{1}\n+\n{2}\n".format(read.qname, read.seq, read.qual))
+                        else:
+                            out_file.write(">{0}\n{1}\n".format(read.qname, read.seq))
         out_file.close()
 
     file.close()
@@ -101,5 +114,5 @@ if __name__ == "__main__":
     # parser.add_argument('-o', '--out', help='file name for extracted alignments', required=True)   
     # options = parser.parse_args()
     # extract_reads(options)
-    parse_cluster(sys.argv[1], sys.argv[2], sys.argv[3])
+    parse_cluster(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
     
