@@ -56,7 +56,7 @@ def run_list(p1, p2):
 
 	file = open(p2, 'r')
 	for line in file:
-		seq = line.strip('\n').split('\t')
+		seq = line.strip('\n').split('_')
 		breakpoint = int(seq[1])
 		for pos in answer:
 			if pos[0] - 50 <= breakpoint and breakpoint <= pos[0] + 50:
