@@ -57,8 +57,9 @@ def organize_split_signal(chr, primary_info, Supplementary_info, total_L, low_ba
 		local_chr = seq[0]
 		local_start = int(seq[1])
 		local_cigar = seq[3]
-		dic_starnd = {1:'+', 2: '-'}
+		dic_starnd = {1:'+', 2:'-', 3:'+', 4:'-'}
 
+		# print primary_info[4]
 		if dic_starnd[primary_info[4]] != seq[2]:
 			continue
 		if chr != local_chr:
@@ -94,7 +95,7 @@ def parse_read_final(read, low_bandary):
 			shift += 1
 			NSI_contig = read.query_sequence[_shift_read_ - element[1]:_shift_read_]
 			# chr_name, breakpoint, insert_len, insert_seq
-			INS_pos.append([read.reference_name, pos_start + shift, element[1], NSI_contig])
+			INS_pos.append([read.reference_name, pos_start + shift, element[1], NSI_contig, 1])
 
 		if element[0] in clip_flag:
 			if shift == 0:
@@ -102,7 +103,7 @@ def parse_read_final(read, low_bandary):
 			else:
 				primary_clip_1 = element[1]
 
-	if process_signal:
+	if process_signal != 0:
 		Tags = read.get_tags()
 		chr = read.reference_name
 		primary_info = [pos_start, pos_end, primary_clip_0, primary_clip_1, process_signal]
@@ -116,7 +117,15 @@ def parse_read_final(read, low_bandary):
 					# [the breakpoint on reference]
 					# [the insertion size]
 					# [the NSI] 
-					INS_pos.append([chr, k[2], k[1] - k[0], NSI_contig])
+					INS_pos.append([chr, k[2], k[1] - k[0], NSI_contig, 1])
+
+	uniq_list = dict()
+	for i in INS_pos:
+		key = "%s%d%d"%(i[0], i[1], i[2])
+		if key not in uniq_list:
+			uniq_list[key] = 0
+		else:
+			i[4] = 0
 
 	return INS_pos
 
@@ -128,6 +137,8 @@ def load_final_alignment(sam_path, out_path):
 		feed_back = parse_read_final(read, 50)
 		if len(feed_back) > 0:
 			for i in feed_back:
+				if i[4] == 0:
+					continue
 				# outfile.write("%s\t%d\t%d\t%s\n"%(i[0], i[1], i[2], i[3])) 
 				outfile.write(">%s_%d_%d\n"%(i[0], i[1], i[2]))
 				outfile.write("%s\n"%(i[3]))
