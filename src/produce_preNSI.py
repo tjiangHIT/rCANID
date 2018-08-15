@@ -79,6 +79,14 @@ def parse_read_final(read, low_bandary):
 	if process_signal == 0:
 		return INS_pos
 
+	# read.query_name
+	qname = read.query_name
+	if int(qname.split('_')[2].split('=')[1]) < 10:
+		# return INS_pos
+		evidence_tag = 'w'
+	else:
+		evidence_tag = 's'
+
 	pos_start = read.reference_start
 	shift = 0
 	_shift_read_ = 0
@@ -95,7 +103,7 @@ def parse_read_final(read, low_bandary):
 			shift += 1
 			NSI_contig = read.query_sequence[_shift_read_ - element[1]:_shift_read_]
 			# chr_name, breakpoint, insert_len, insert_seq
-			INS_pos.append([read.reference_name, pos_start + shift, element[1], NSI_contig, 1])
+			INS_pos.append([read.reference_name, pos_start + shift, element[1], NSI_contig, evidence_tag])
 
 		if element[0] in clip_flag:
 			if shift == 0:
@@ -117,15 +125,15 @@ def parse_read_final(read, low_bandary):
 					# [the breakpoint on reference]
 					# [the insertion size]
 					# [the NSI] 
-					INS_pos.append([chr, k[2], k[1] - k[0], NSI_contig, 1])
+					INS_pos.append([chr, k[2], k[1] - k[0], NSI_contig, evidence_tag])
 
-	uniq_list = dict()
-	for i in INS_pos:
-		key = "%s%d%d"%(i[0], i[1], i[2])
-		if key not in uniq_list:
-			uniq_list[key] = 0
-		else:
-			i[4] = 0
+	# uniq_list = dict()
+	# for i in INS_pos:
+	# 	key = "%s%d%d"%(i[0], i[1], i[2])
+	# 	if key not in uniq_list:
+	# 		uniq_list[key] = 0
+	# 	else:
+	# 		i[4] = 0
 
 	return INS_pos
 
@@ -140,7 +148,7 @@ def load_final_alignment(sam_path, out_path):
 				if i[4] == 0:
 					continue
 				# outfile.write("%s\t%d\t%d\t%s\n"%(i[0], i[1], i[2], i[3])) 
-				outfile.write(">%s_%d_%d\n"%(i[0], i[1], i[2]))
+				outfile.write(">%s_%d_%d_%s\n"%(i[0], i[1], i[2], i[4]))
 				outfile.write("%s\n"%(i[3]))
 	samfile.close()
 	outfile.close()

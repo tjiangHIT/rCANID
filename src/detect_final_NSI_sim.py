@@ -23,7 +23,7 @@ def analysis_cigar(deal_cigar, ins_l):
 	if seq[-1][1] == 'S':
 		SoftClip_len += seq[-1][0]
 
-	if SoftClip_len * 4 > ins_l:
+	if SoftClip_len * 2 > ins_l:
 		return 0
 	else:
 		return 1
@@ -33,7 +33,7 @@ def judgement(flag, MAPQ, cigar, NSI_len, evidence_tag):
 		return 1
 		# NSI
 	else:
-		if MAPQ < 0:
+		if MAPQ < 10:
 			return 0
 			# invaild insertion
 		else:
@@ -45,69 +45,7 @@ def judgement(flag, MAPQ, cigar, NSI_len, evidence_tag):
 				return 2 
 				# normal insertion
 
-def load_pre_cluster(path):
-	pre_info = dict()
-	file = open(path, 'r')
-	for line in file:
-		seq = line.strip('\n').split('\t')
-		chr = seq[0]
-		low = int(seq[1])
-		up = int(seq[2])
-		if len(seq[4:]) < 5:
-			continue
-		if chr not in pre_info:
-			pre_info[chr] = list()
-		pre_info[chr].append([low, up])
-	file.close()
-	return pre_info
-
-def load_pre_cluster_temp(path):
-	pre_info = dict()
-	file = open(path, 'r')
-	for line in file:
-		seq = line.strip('\n').split(' ')
-		chr = seq[1]
-		breakpoint = int(seq[2])
-		if int(seq[4]) < 10:
-			continue
-		if chr not in pre_info:
-			pre_info[chr] = list()
-		pre_info[chr].append(breakpoint)
-	file.close()
-	return pre_info
-
-# def temp_call(sam_path, out_path, p3):
-# 	masker = load_pre_cluster_temp(p3)
-
-# 	precall = dict()
-# 	file = open(sam_path, 'r')
-# 	for line in file:
-# 		seq = line.strip('\n').split('\t')
-# 		if seq[0][0] == '@':
-# 			continue
-
-# 		chr = seq[0].split('_')[0][3:]
-# 		breakpoint = int(seq[0].split('_')[1])
-# 		NSI_len = int(seq[0].split('_')[2])
-# 		flag = seq[1]
-# 		NSI = seq[9]
-# 		MAPQ = int(seq[4])
-# 		cigar = seq[5]
-# 		evidence_tag = seq[0].split('_')[3]
-# 		# local_key = "%d_%d"%(breakpoint, NSI_len)
-
-# 		if judgement(flag, MAPQ, cigar, NSI_len, evidence_tag) != 0:
-
-
-# 		if chr not in precall:
-# 			precall[chr] = 
-
-def final_call(sam_path, out_path, p3):
-
-	masker = load_pre_cluster(p3)
-	# for i in masker:
-	# 	print i, masker[i][0]
-
+def final_call(sam_path, out_path):
 	callset = dict()
 	file = open(sam_path, 'r')
 	for line in file:
@@ -129,7 +67,6 @@ def final_call(sam_path, out_path, p3):
 			callset[chr] = dict()
 			# callset[chr][breakpoint] = list()
 			info = judgement(flag, MAPQ, cigar, NSI_len, evidence_tag)
-			# print local_key, info
 			if info	!= 0:
 				callset[chr][local_key] = list()
 				callset[chr][local_key].append([NSI_len, NSI, info, evidence_tag])
@@ -137,7 +74,6 @@ def final_call(sam_path, out_path, p3):
 			# if breakpoint not in callset[chr]:
 				# callset[chr][breakpoint] = list()
 			info = judgement(flag, MAPQ, cigar, NSI_len, evidence_tag)
-			# print local_key, info
 			if info	!= 0:
 				if local_key not in callset[chr]:
 					callset[chr][local_key] = list()
@@ -193,24 +129,17 @@ def final_call(sam_path, out_path, p3):
 		temp = list()
 		temp.append(temp_calling[chr][0])
 		for ele in temp_calling[chr][1:]:
-			if temp[-1][0] + 50 < ele[0]:
+			if temp[-1][0] + 20 < ele[0]:
 				temp = sorted(temp, key=lambda x:x[1])
-				# print temp
-				if len(temp) > 0:
+				if len(temp) > 3:
 					# file.write("%s\t%d\t%d\t%s\n"%(chr, temp[len(temp)/2][0], temp[len(temp)/2][1], temp[len(temp)/2][2]))
-					if chr in masker:
-						for i in masker[chr]:
-							if i[0] - 50 <= temp[0][0] and temp[0][0] <= i[1] + 50:
-								file.write("%s\t%d\t%d\t%s\n"%(chr, temp[0][0], temp[0][1], temp[0][2]))
+					file.write("%s\t%d\t%d\t%s\n"%(chr, temp[0][0], temp[0][1], temp[0][2]))
 				else:
 					for i in temp:
 						if i[3] == 's':
 							# file.write("%s\t%d\t%d\t%s\n"%(chr, temp[len(temp)/2][0], temp[len(temp)/2][1], temp[len(temp)/2][2]))
-							if chr in masker:
-								for i in masker[chr]:
-									if i[0] - 50 <= temp[0][0] and temp[0][0] <= i[1] + 50:
-										file.write("%s\t%d\t%d\t%s\n"%(chr, temp[0][0], temp[0][1], temp[0][2]))
-										break
+							file.write("%s\t%d\t%d\t%s\n"%(chr, temp[0][0], temp[0][1], temp[0][2]))
+							break
 				# temp = sorted(temp, key=lambda x:x[1])
 				# file.write("%s\t%d\t%d\t%s\n"%(chr, temp[len(temp)/2][0], temp[len(temp)/2][1], temp[len(temp)/2][2]))		
 				temp = list()
@@ -218,24 +147,15 @@ def final_call(sam_path, out_path, p3):
 			else:
 				temp.append(ele)
 		temp = sorted(temp, key=lambda x:x[1])
-		if len(temp) > 0:
+		if len(temp) > 3:
 			# file.write("%s\t%d\t%d\t%s\n"%(chr, temp[len(temp)/2][0], temp[len(temp)/2][1], temp[len(temp)/2][2]))
-			# file.write("%s\t%d\t%d\t%s\n"%(chr, temp[0][0], temp[0][1], temp[0][2]))
-			if chr in masker:
-				for i in masker[chr]:
-					if i[0] - 50 <= temp[0][0] and temp[0][0] <= i[1] + 50:
-						file.write("%s\t%d\t%d\t%s\n"%(chr, temp[0][0], temp[0][1], temp[0][2]))
+			file.write("%s\t%d\t%d\t%s\n"%(chr, temp[0][0], temp[0][1], temp[0][2]))
 		else:
 			for i in temp:
 				if i[3] == 's':
 					# file.write("%s\t%d\t%d\t%s\n"%(chr, temp[len(temp)/2][0], temp[len(temp)/2][1], temp[len(temp)/2][2]))
-					if chr in masker:
-						for i in masker[chr]:
-							if i[0] - 50 <= temp[0][0] and temp[0][0] <= i[1] + 50:
-								file.write("%s\t%d\t%d\t%s\n"%(chr, temp[0][0], temp[0][1], temp[0][2]))
-								break
-					# file.write("%s\t%d\t%d\t%s\n"%(chr, temp[0][0], temp[0][1], temp[0][2]))
-					# break
+					file.write("%s\t%d\t%d\t%s\n"%(chr, temp[0][0], temp[0][1], temp[0][2]))
+					break
 		# temp = sorted(temp, key=lambda x:x[1])
 		# file.write("%s\t%d\t%d\t%s\n"%(chr, temp[len(temp)/2][0], temp[len(temp)/2][1], temp[len(temp)/2][2]))
 	# file = open(out_path, 'w')
@@ -245,4 +165,4 @@ def final_call(sam_path, out_path, p3):
 	file.close()
 
 if __name__ == '__main__':
-	final_call(sys.argv[1], sys.argv[2], sys.argv[3])
+	final_call(sys.argv[1], sys.argv[2])

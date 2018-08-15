@@ -70,10 +70,10 @@ def parse_cluster(path, bam_path, out_path, opt):
             print("[INFO]: Finished %d clusters."%(num))
         seq = line.strip('\n').split('\t')
         chr = seq[0]
-        breakpoint = seq[1]+'_'+seq[2]+'_'+str(len(seq[3:]))
-        id_list = seq[3:]
+        breakpoint = seq[1]+'_'+seq[2]+'_'+seq[3]+'_'+str(len(seq[4:]))
+        id_list = seq[4:]
 
-        if len(id_list) < 10:
+        if len(id_list) < 5:
             continue
 
         if opt == "fq":

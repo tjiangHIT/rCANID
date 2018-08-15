@@ -349,12 +349,15 @@ def single_clip(chr, Chr_length, read_evidence):
 	# read_list = list()
 	read_list = dict()
 	start_list = list()
+	strength = 0
 	for i in xrange(int(Chr_length/50)):
 		temp_clip = acquire_clip_locus(50*i, 50*(i+1), chr)
 		if len(temp_clip) > 0:
 			# read_list = list()
 			for ele in temp_clip:
 				start_list.append(ele[0])
+				if ele[1] == 2:
+					strength += 1
 				# read_list.append(ele[2])
 				if ele[2] not in read_list:
 					read_list[ele[2]] = 0
@@ -369,9 +372,10 @@ def single_clip(chr, Chr_length, read_evidence):
 					unique_read = list()
 					for key in read_list:
 						unique_read.append(key)
-					Clip_list.append([chr, min(start_list), max(start_list), unique_read])
+					Clip_list.append([chr, min(start_list), max(start_list), strength, unique_read])
 				start_list = list()
 				read_list = dict()
+				strength = 0
 	return Clip_list
 
 
@@ -443,8 +447,8 @@ def load_sam(sam_path, out_path):
 			# breakpoint = line[0]
 			# sv_size = line[1]
 			# evidence_num = line[2]
-			read_list = "\t".join(line[3])
-			file.write("%s\t%d\t%d\t%s\n"%(line[0], line[1], line[2], read_list))
+			read_list = "\t".join(line[4])
+			file.write("%s\t%d\t%d\t%d\t%s\n"%(line[0], line[1], line[2], line[3],read_list))
 		file.close()
 
 		# logging.info("%d INS signal loci in the chromsome %s."%(len(Cluster_INS), Chr_name))
