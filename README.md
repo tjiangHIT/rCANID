@@ -36,8 +36,8 @@ The simulated datasets use for benchmarking are available at: https://drive.goog
 	3. ngmlr
 	4. samtools
 	5. cigar
-  6. MECAT
-  7. Minimap2
+    6. MECAT
+    7. Minimap2
 
 	Python version 2.7
 
