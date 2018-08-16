@@ -3,12 +3,12 @@ rCANID - read Clustering and Assembliy-based Novel insertion Detection tool
 
 ---
 ### Getting Start
-           _____    ____    __    _   _____   _____
-    _ __  / __  \  / __ \  |  \  | | |_   _| |  __ \
-   | ^__| | | |_| / /  \ \ |   \ | |   | |   | |  \ \
-   | |    | |  _  | |__| | | |\ \| |   | |   | |  | |
-   | |    | |_| | |  __  | | | \   |  _| |_  | |__/ /
-   |_|    \_____/ |_|  |_| |_|  \__| |_____| |_____/
+	           _____    ____    __    _   _____   _____
+	    _ __  / __  \  / __ \  |  \  | | |_   _| |  __ \
+	   | ^__| | | |_| / /  \ \ |   \ | |   | |   | |  \ \
+	   | |    | |  _  | |__| | | |\ \| |   | |   | |  | |
+	   | |    | |_| | |  __  | | | \   |  _| |_  | |__/ /
+	   |_|    \_____/ |_|  |_| |_|  \__| |_____| |_____/
      
 	
 	$ git clone https://github.com/hitbc/rCANID.git (git clone https://github.com/tjiangHIT/rCANID.git)
@@ -34,7 +34,7 @@ rCANID - read Clustering and Assembliy-based Novel insertion Detection tool
 	$ ./rMETL.py
 
 ---	
-	
+
 ### Introduction
 
 
