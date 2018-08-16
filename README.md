@@ -16,7 +16,25 @@ rCANID - read Clustering and Assembliy-based Novel insertion Detection tool
 	$ bash INSTALL.sh
 	$ ./rCANID.py
 
+---
+
+---
+### Getting Start
+		        __        __   ______   _________   _
+		 _ __  |  \      /  | |  ____| |___   ___| | |
+		| ^__| |   \    /   | | |___       | |     | |
+		| |    | |\ \  / /| | |  ___|      | |     | |
+		| |    | | \ \/ / | | | |____      | |     | |____
+		|_|    |_|  \__/  |_| |______|     |_|     |______|
+     
+	
+	$ git clone https://github.com/hitbc/rMETL.git (git clone https://github.com/tjiangHIT/rMETL.git)
+	$ cd rMETL/
+	$ bash INSTALL.sh
+	$ ./rMETL.py
+
 ---	
+	
 ### Introduction
 
 
