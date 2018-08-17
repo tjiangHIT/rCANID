@@ -24,7 +24,6 @@ USAGE="""\
 	Thirdly, identify NSI fragments from realignment and filter false positive sequences.
 
 	NGMLR & Samtools need to be imported in env path.
-
 """
 
 def parseArgs(argv):

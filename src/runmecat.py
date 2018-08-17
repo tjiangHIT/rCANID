@@ -18,6 +18,7 @@ for i in file:
 		flist.append(i.split(".")[0])
 		filetype = 3
 
+
 if filetype == 0:
 	for i in flist:
 		fsize = os.path.getsize(i+".fq")

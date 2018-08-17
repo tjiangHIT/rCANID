@@ -1,6 +1,14 @@
 # coding: utf-8
-#This is a clustering script for clustering minimap2's reads' overlaps results.
-#Author: Yilei Fu
+
+''' 
+ * All rights Reserved, Designed By HIT-Bioinformatics   
+ * @Title:  Reads_Clustering.py
+ * @Package: 
+ * @Description: This is a clustering script for clustering minimap2's reads' overlaps results.
+ * @author: Fu Yilei
+ * @date: Augst 17 2018
+ * @version V1.0.1     
+'''
 
 from collections import defaultdict
 import json
