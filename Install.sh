@@ -1,3 +1,3 @@
 #!/bin/bash
 
-ln -s src/process.py deNSF
+ln -s src/process.py rCANID

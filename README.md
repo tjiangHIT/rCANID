@@ -14,26 +14,9 @@ rCANID - read Clustering and Assembliy-based Novel insertion Detection tool
 	$ git clone https://github.com/hitbc/rCANID.git (git clone https://github.com/tjiangHIT/rCANID.git)
 	$ cd rCANID/
 	$ bash INSTALL.sh
-	$ ./rCANID.py
+	$ ./rCANID
 
 ---
-
----
-### Getting Start
-		        __        __   ______   _________   _
-		 _ __  |  \      /  | |  ____| |___   ___| | |
-		| ^__| |   \    /   | | |___       | |     | |
-		| |    | |\ \  / /| | |  ___|      | |     | |
-		| |    | | \ \/ / | | | |____      | |     | |____
-		|_|    |_|  \__/  |_| |______|     |_|     |______|
-     
-	
-	$ git clone https://github.com/hitbc/rMETL.git (git clone https://github.com/tjiangHIT/rMETL.git)
-	$ cd rMETL/
-	$ bash INSTALL.sh
-	$ ./rMETL.py
-
----	
 
 ### Introduction
 
@@ -43,6 +26,7 @@ rCANID - read Clustering and Assembliy-based Novel insertion Detection tool
 ### Simulated datasets
 
 The simulated datasets use for benchmarking are available at: https://drive.google.com/open?id=1TyA-fz7BBk-d2VOlpF5nvWRdXVdPcKej
+
 ---
 
 

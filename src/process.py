@@ -15,31 +15,36 @@ import sys
 import pysam
 # import extract, Map, call_TE
 # from process import *
+import cluster
+import assembly
+import detection
 
-# STAGES = {"extract": extract.run, \
-#           "map": Map.run, \
-#           "call": call_TE.run}
+STAGES = {"clustering": cluster.run, \
+          "assembly": assembly.run, \
+          "detection": detection.run}
 
 STAGES = dict()
 
 VERSION="1.0.1"
 
 USAGE = """\
-         _           __     _   ______   ______
-        | |         |  \   | | |  ____| |  ____|
-        | |         |   \  | | | |____  | |____
-     ___| |   ____  | |\ \ | | |_____ | |  ____|
-    |  _  |  / __ \ | | \ \| |  _   | | | |
-    | |_| | |  ___/ | |  \   | | |__| | | |
-    |_____|  \____| |_|   \__| |______| |_|
+             _____    ____    __    _   _____   _____
+      _ __  / __  \  / __ \  |  \  | | |_   _| |  __ \
+     | ^__| | | |_| / /  \ \ |   \ | |   | |   | |  \ \
+     | |    | |  _  | |__| | | |\ \| |   | |   | |  | |
+     | |    | |_| | |  __  | | | \   |  _| |_  | |__/ /
+     |_|    \_____/ |_|  |_| |_|  \__| |_____| |_____/
 
-    deNSF - deBruijn Graph-based Novel Sequence Insertion Finder
+  rCANID - read Clustering and Assembliy-based Novel insertion Detection tool
 
-  STAGE is one of
+  STAGE is one 
+    clustering  cluster all of signal reads and unmapped reads respectively
+    assembly    generate high-quality contigs for each cluster
+    detection   detect novel sequence insertions
     
   See README.md for documentation or --help for details
   
-  deNSF V%s
+  rCANID V%s
 """%(VERSION)
 
 def parseArgs():
