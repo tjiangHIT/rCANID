@@ -20,9 +20,11 @@ rCANID - read Clustering and Assembliy-based Novel insertion Detection tool
 
 ### Introduction
 
-
+## Assembly
+The assembly procedure requires [-f --folder FOLDER] as input to sepecify the path of clustered reads. In assembly.py, all reads will be assembled with MECAT and combined into one "merged.contigs.fasta" file. Then use this file to finish other work.
 
 ---
+
 ### Simulated datasets
 
 The simulated datasets use for benchmarking are available at: https://drive.google.com/open?id=1TyA-fz7BBk-d2VOlpF5nvWRdXVdPcKej
