@@ -54,19 +54,24 @@ def extract_mapped_reads(temp_dir, bam_path, out_path):
 	r, o, e = exe(cmd)
 	logging.info("Finished cluster info merging.")
 
-	logging.info("Extracting mapped signal reads...")
+	logging.info("Extracting mapped signal reads.")
 	if temp_dir[-1] != '/':
 		temp_dir += '/'
 	if out_path[-1] != '/':
 		out_path += "/"
-	parse_cluster(temp_dir+"mapped_cluster_info.txt", bam_path, out_path, 'fa')
+
+	cmd = ("cd %s && mkdir Unmapped Signal && cd $OLDPWD" % (out_path))
+	r, o, e = exe(cmd)
+
+	parse_cluster(temp_dir+"mapped_cluster_info.txt", bam_path, out_path+"Signal/", 'fa')
 	logging.info("Finished mapped signal reads extraction.")
 
 def extract_unmapped_reads(BAM, out_path):
+	logging.info("Extracting unmapped reads.")
 	from string import maketrans
 	revComp = maketrans("ATCGNatcgn","TAGCNtagcn")
 	s = pysam.Samfile(BAM)
-	file = open(out_path+"unmaped.fa", 'w')
+	file = open(out_path+"Unmapped/unmapped.fa", 'w')
 	get = s
 	for read in get:
 		if read.flag != 4:
@@ -78,6 +83,7 @@ def extract_unmapped_reads(BAM, out_path):
         		# sys.stdout.write("@{0}\n{1}\n+\n{2}\n".format(read.qname, read.seq, read.qual))
 			file.write(">{0}\n{1}\n".format(read.qname, read.seq))
 	file.close()
+	logging.info("Finished unmapped reads extraction.")
 
 def run(argv):
 	import time
