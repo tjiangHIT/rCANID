@@ -12,25 +12,25 @@
 
 import argparse
 import sys
-import pysam
+# import pysam
 # import extract, Map, call_TE
 # from process import *
 import cluster
 import assembly
 import detection
 
-STAGES = {"clustering": cluster.run, \
-          "assembly": assembly.run, \
-          "detection": detection.run}
+STAGES = {"Cluster": cluster.run, \
+          "Assemble": assembly.run, \
+          "Detect": detection.run}
 
-STAGES = dict()
+# STAGES = dict()
 
 VERSION="1.0.1"
 
 USAGE = """\
              _____    ____    __    _   _____   _____
-      _ __  / __  \  / __ \  |  \  | | |_   _| |  __ \
-     | ^__| | | |_| / /  \ \ |   \ | |   | |   | |  \ \
+      _ __  / __  \  / __ \  |  \  | | |_   _| |  __ \\
+     | ^__| | | |_| / /  \ \ |   \ | |   | |   | |  \ \\
      | |    | |  _  | |__| | | |\ \| |   | |   | |  | |
      | |    | |_| | |  __  | | | \   |  _| |_  | |__/ /
      |_|    \_____/ |_|  |_| |_|  \__| |_____| |_____/
@@ -38,9 +38,9 @@ USAGE = """\
   rCANID - read Clustering and Assembliy-based Novel insertion Detection tool
 
   STAGE is one 
-    clustering  cluster all of signal reads and unmapped reads respectively
-    assembly    generate high-quality contigs for each cluster
-    detection   detect novel sequence insertions
+    Cluster  cluster all of signal reads and unmapped reads respectively
+    Assemble generate high-quality contigs for each cluster
+    Detect   detect novel sequence insertions
     
   See README.md for documentation or --help for details
   

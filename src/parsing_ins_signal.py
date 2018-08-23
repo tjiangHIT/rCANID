@@ -4,7 +4,7 @@
  * All rights Reserved, Designed By HIT-Bioinformatics   
  * @Title:  process.py
  * @Package: 
- * @Description: Control the deNSF pipeline
+ * @Description: parse signaling read
  * @author: tjiang
  * @date: June 11 2018
  * @version V1.0.1     
@@ -396,13 +396,13 @@ def load_sam(sam_path, out_path):
 	# print(samfile.get_index_statistics())
 	contig_num = len(samfile.get_index_statistics())
 	# print contig_num
-	# logging.info("The total number of chromsomes: %d"%(contig_num))
-	print("The total number of chromsomes: %d"%(contig_num))
+	logging.info("The total number of chromsomes: %d"%(contig_num))
+	# print("The total number of chromsomes: %d"%(contig_num))
 	# Acquire_Chr_name
 	for _num_ in xrange(contig_num):
 		Chr_name = samfile.get_reference_name(_num_)
-		# logging.info("Resolving the chromsome %s."%(Chr_name))
-		print("Resolving the chromsome %s."%(Chr_name))
+		logging.info("Resolving the chromsome %s."%(Chr_name))
+		# print("Resolving the chromsome %s."%(Chr_name))
 		Chr_length = samfile.lengths[_num_]
 		# print Chr_length
 		if Chr_name not in CLIP_note:
@@ -439,7 +439,7 @@ def load_sam(sam_path, out_path):
 
 		Cluster_INS = single_clip(Chr_name, Chr_length, 10)
 
-		print("%d INS signal loci in the chromsome %s."%(len(Cluster_INS), Chr_name))		
+		logging.info("%d INS signal loci in the chromsome %s."%(len(Cluster_INS), Chr_name))		
 
 		local_path = "%s_%s.txt"%(out_path, Chr_name)
 		file = open(local_path, 'w')

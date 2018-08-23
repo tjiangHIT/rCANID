@@ -8,6 +8,8 @@ edit by tjiang
 
 import pysam, sys
 from string import maketrans
+import logging
+
 revComp = maketrans("ATCGNatcgn","TAGCNtagcn")
 
 def get_names(names):
@@ -55,19 +57,19 @@ def extract_reads(options):
 
 def parse_cluster(path, bam_path, out_path, opt):
     # load the bam file
-    print("[INFO]: Loading the Bam file.")
+    logging.info("Loading the Bam file.")
     bamfile = pysam.AlignmentFile(bam_path, 'rb')
     name_indexed = pysam.IndexedReads(bamfile)
     name_indexed.build()
 
     # load cluster info
-    print("[INFO]: Loading the cluster file.")
+    logging.info("Loading the cluster file.")
     num = 0
     file = open(path, 'r')
     for line in file:
         num += 1
         if num % 100 == 0:
-            print("[INFO]: Finished %d clusters."%(num))
+            logging.info("Finished %d clusters."%(num))
         seq = line.strip('\n').split('\t')
         chr = seq[0]
         breakpoint = seq[1]+'_'+seq[2]+'_'+seq[3]+'_'+str(len(seq[4:]))
