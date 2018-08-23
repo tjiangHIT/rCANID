@@ -44,16 +44,12 @@ def filecombination(filepath, output):
                             k.write(f.read()+"\n")
 
 def run_mecat(file, output, coverage, file_size, Folder):
-	logging.info("Runing mecat2pw.")
 	cmd = ("cd %s && mecat2pw -j 0 -d %s.fa -o %s.pm.can -t %d -w wrk_dir -n 200 -a 50 -k 2" % (Folder, file, file, Threads))
 	r, o, e = exe(cmd)
-	logging.info("Runing mecat2cns.")
 	cmd = ("cd %s && mecat2cns -i 0 -t %d %s.pm.can %s.fa %s.collect.fa -r 0.2 -a 50 -c 2 -l 50" % (Folder, Threads, file, file, file))
 	r, o, e = exe(cmd)
-	logging.info("Runing extract_sequences.")
 	cmd = ("cd %s && extract_sequences %s.collect.fa %s.%dx %s %d" % (Folder, file, file, coverage, file_size, coverage))
 	r, o, e = exe(cmd)
-	logging.info("Runing mecat2canu.")
 	cmd = ("cd %s && mecat2canu -trim-assemble -p %s -d %s corOutCoverage=%d minOverlapLength=50 minReadLength=50 genomeSize=%s ErrorRate=0.2 maxMemory=40 maxThreads=%d useGrid=0 Overlapper=mecat2asmpw -pacbio-corrected %s.%dx.fasta" % (Folder, file, file, coverage, file_size, Threads, file, coverage))
 	r, o, e = exe(cmd)
 	cmd = ("cd %s && cat %s/%s.contigs.fasta %s/%s.unassembled.fasta > %s%s.contigs.fasta" % (Folder, file, file, file, file, output, file))
@@ -61,14 +57,8 @@ def run_mecat(file, output, coverage, file_size, Folder):
 	cmd = ("cd %s && rm  *.fa.fastq *.gkpStore* *.qual *.qv *.frg *.collect.fa *.can *.can.part0 *.partition_files -r wrk_dir %s *.%dx.fasta" % (Folder, file, coverage))
 	r, o, e = exe(cmd)
 
-def Merge_data(output):
-    logging.info("Merging contigs.")
-    cmd = ("cd %s && cat *.contigs.fasta > %sContigs.fa" % (output, output))
-    r, o, e = exe(cmd)
-
 def run(argv):
     args = parseArgs(argv)
-    setupLogging(False)
     starttime = time.time()
 
     if args.folder[-1] == '/':
@@ -86,11 +76,7 @@ def run(argv):
 
     for i in flist:
         fsize = os.path.getsize(Folder + i + ".fa")
-        try:
-            run_mecat(i, args.output, args.coverage, fsize, Folder)
-        except:
-            pass
-    Merge_data(args.output)
+        run_mecat(i, args.output, args.coverage, fsize, Folder)
 
     logging.info("Finished in %0.2f seconds."%(time.time() - starttime))
     # filecombination("contigs/", args.prefix_output)
