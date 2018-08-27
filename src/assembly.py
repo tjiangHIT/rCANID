@@ -16,6 +16,7 @@ import time
 import os
 import logging
 from CommandRunner import *
+from transfer_contig_name import * 
 
 MEMORY = 40
 Threads = 4
@@ -29,7 +30,8 @@ USAGE="""\
 
 def parseArgs(argv):
 	parser = argparse.ArgumentParser(prog="process.py Assemble", description=USAGE, formatter_class=argparse.RawDescriptionHelpFormatter)
-	parser.add_argument('-f', '--folder', help = "Folder path.",  type = str)
+	parser.add_argument('-f', '--folder', help = "Folder path of signal reads.",  type = str)
+	parser.add_argument('-F', '--Folder', help = "Folder path of unmapped reads.",  type = str)
 	parser.add_argument('-o', '--output', help = "The prefix of output.",  type = str)
 	parser.add_argument('-c', '--coverage', help = "The coverage of longest corrected reads to be extracted.", type = int)
 	args = parser.parse_args(argv)
@@ -61,10 +63,10 @@ def run_mecat(file, output, coverage, file_size, Folder):
 	cmd = ("cd %s && rm  *.fa.fastq *.gkpStore* *.qual *.qv *.frg *.collect.fa *.can *.can.part0 *.partition_files -r wrk_dir %s *.%dx.fasta" % (Folder, file, coverage))
 	r, o, e = exe(cmd)
 
-def Merge_data(output):
-    logging.info("Merging contigs.")
-    cmd = ("cd %s && cat *.contigs.fasta > %sContigs.fa" % (output, output))
-    r, o, e = exe(cmd)
+def Merge_data(Folder):
+	logging.info("Merging contigs.")
+	cmd = ("cd %s && cat *.contigs.fasta > preContigs.fa" % (Folder))
+	r, o, e = exe(cmd)
 
 def run(argv):
     args = parseArgs(argv)
@@ -90,7 +92,16 @@ def run(argv):
             run_mecat(i, args.output, args.coverage, fsize, Folder)
         except:
             pass
-    Merge_data(args.output)
+            
+    Merge_data(Folder)
+    trans_contig_name(Folder+"preContigs.fa", args.output+"Contigs.fa")
+    
+    # unmapped reads assembly
+
+    # generate super-contigs from signal & unmapped contigs
+
+    # output super-contigs
+    
 
     logging.info("Finished in %0.2f seconds."%(time.time() - starttime))
     # filecombination("contigs/", args.prefix_output)
