@@ -19,22 +19,22 @@ import sys
 import multiprocessing
 import logging
 import argparse
-import progressbar
+# import progressbar
 
 PASSED_LIST = [[]]
-WHOLE_PASSED_LIST = []
-ALL_PASSED = []
+WHOLE_PASSED_LIST = list()
+ALL_PASSED = list()
 PASSED = [[]]
 COUNT = 0
-NAME_CLUSTER = []
+NAME_CLUSTER = list()
 OVERLAP_LIST = multiprocessing.Manager().list()
 
 #FILE_LIST = []
 
 
-def execute_minimap_command(input_file_name, output_file_name, threads):
+def execute_minimap_command(input_file_name, output_file_name, threads, seq_type):
     logging.info("No paf file found. Executing minimap2 overlap detecting commands...")
-    os.system("minimap2 -x ava-pb "+input_file_name+" " +input_file_name+ " > "+output_file_name+" -t "+ str(threads))
+    os.system("minimap2 -x %s "%(seq_type)+input_file_name+" " +input_file_name+ " > "+output_file_name+" -t "+ str(threads))
     logging.info("Minimap2 command executed, paf file generated.")
 
 def read_paf_file(file_name):
@@ -53,6 +53,7 @@ def delete_useless_info(file_list, process_id):
     for i in range(0, length):
         temp = file_list[i].split('\t')
         if (float(temp[9])/float(temp[10]) >= 0.9) and (2*temp[10] >= temp[6]):
+        # if (float(temp[9])/float(temp[10]) >= 0.2):
             OVERLAP_LIST.append((temp[0], temp[5]))
     file_list = []
     logging.info("Process "+  str(process_id) +" is finished.")
@@ -96,16 +97,16 @@ def generate_overlap_dic(ovlpl):
     ovlpdic = {}
     length = len(ovlpl)
     count = 0
-    p = progressbar.ProgressBar(length)
-    p.start()
+    # p = progressbar.ProgressBar(length)
+    # p.start()
     for i in ovlpl:
         if i[0] in ovlpdic:
             ovlpdic[i[0]].append(i[1])
         else:
             ovlpdic.update({i[0]:[i[1]]})
-        p.update(count)
+        # p.update(count)
         count = count+1
-    p.finish()
+    # p.finish()
     logging.info("Finished")
     return ovlpdic
 
@@ -146,7 +147,7 @@ def gene_search(dic, node):
                 gene_search(dic, i)
 
 
-def preprocess_clustered_file(dict_name):
+def preprocess_clustered_file(dict_name, cluster_count):
     #Dividing the whole reads file to divide whole reads into different clustered reads
     clusterfile = open(dict_name)
     clusterlist = clusterfile.readlines()
@@ -161,18 +162,18 @@ def preprocess_clustered_file(dict_name):
                 templist.append(splited_cluster_list[j])
         cluster.append(templist)
     for i in cluster:
-        if len(i) >= 50:
+        if len(i) >= cluster_count:
             temp = []
             for j in i:
                 temp.append(">" + j + '\n')                                        
             NAME_CLUSTER.append(temp)
-    logging.info("Deleted all clusters having reads larger than 50, the remaining clusters' number is: " + str(len(NAME_CLUSTER)))
+    logging.info("Deleted all clusters having reads larger than %d, the remaining clusters' number is: "%(cluster_count) + str(len(NAME_CLUSTER)))
 
 
 
-def file_select(file_name, cluster_list, cluster_num):
+def file_select(file_path, cluster_list, cluster_num):
     genome_size = 0
-    with open(file_name, 'r') as f: 
+    with open(file_path+"unmapped.fasta", 'r') as f: 
         while True:
             line_0 = f.readline()
             if line_0 == '':
@@ -181,12 +182,12 @@ def file_select(file_name, cluster_list, cluster_num):
                 fname = "clustered_reads" + str(cluster_num) + ".fa"                                    
                 line_1 = f.readline()
                 genome_size = genome_size + len(line_1)
-                with open("contigs/"+fname, 'a') as clusterfile:
+                with open(file_path+fname, 'a') as clusterfile:
                     clusterfile.write(line_0)
                     clusterfile.write(line_1)
 
     logging.info("Cluster file " + str(cluster_num) + " generated, genome size is:" +str(genome_size))
-    with open("genesize.log", 'a+') as gensizefile:
+    with open(file_path+"genesize.log", 'a+') as gensizefile:
         gensizefile.write(str(genome_size)+":"+str(cluster_num)+"\n")
     #gsizelist.append(str(genomesize)+":"+(cluster_num))
 
@@ -202,17 +203,51 @@ def thread_division(whole_cluster, process_num, list_num):
     return divided_cluster
 
 
-def execute_file_select(file_name, divided_cluster, block_num, process_num):
+def execute_file_select(file_path, divided_cluster, block_num, process_num):
     i = divided_cluster[process_num]
     for j in range(len(i)):
-        logging.info("Process NO." + str(process_num) + " is generating clustered read " + str(j + block_num))
-        file_select(file_name, i[j], j + block_num)
+        logging.info("Process No." + str(process_num) + " is generating clustered read " + str(j + block_num))
+        file_select(file_path, i[j], j + block_num)
 
 def parseArgs(argv):
 	parser = argparse.ArgumentParser(prog="Reads_Clustering.py", description=USAGE, formatter_class=argparse.RawDescriptionHelpFormatter)
 	parser.add_argument('-f', '--fa', help = "fa file path.",  type = str)
 	args = parser.parse_args(argv)
 	return args
+
+
+def cluster_unaligned_reads(input, threads, seq_type, cluster_count):
+    if not os.path.exists(input+"overlaps.paf"):
+        execute_minimap_command(input+"unmapped.fasta", input+"overlaps.paf", threads, seq_type)
+    if not os.path.exists(input+"olapdic.log"):
+        file_list = read_paf_file(input+"overlaps.paf")
+        file_list_length = int(len(file_list)/threads)
+        process_list = list()
+        for i in range(threads-1):
+            process_list.append(multiprocessing.Process(target=delete_useless_info, args=(file_list[file_list_length*i:file_list_length*(i+1)],i)))
+            #print("Deleting process "+str(i)+" added into pool.")
+        for i in range(threads-1):
+            process_list[i].start()
+        for i in range(threads-1):
+            process_list[i].join()
+        logging.info("All unaligned clusters Finished!")
+
+        d = generate_overlap_dic(OVERLAP_LIST)
+        with open(input+"dictionary.dict", 'w+') as f:
+            f.write(str(d))
+        #generate_passed_list(d, overlap_info_file_name)
+        generate_clustered_file(d, input+"olapdic.log")
+        # end_1 = time.time()
+    else:
+        logging.info("The cluster file has already been generated, producing clusterd reads now...")
+        
+    preprocess_clustered_file(input+"olapdic.log", cluster_count)
+
+    list_length = int(len(NAME_CLUSTER)/threads)
+    d_cluster = thread_division(NAME_CLUSTER, threads, list_length)
+    for i in range(threads):
+        multiprocessing.Process(target=execute_file_select, args=(input, d_cluster, list_length*i, i)).start()
+
 
 def run(argv):
     args = parseArgs(argv)
@@ -224,7 +259,7 @@ def run(argv):
     minimap2_thread_num = 32                                                                                    #NOTICE! This should be modified accroding to different machines.
     process_num = 32                                                                                            #NOTICE! This should be modified accroding to different machines.  Thread num must be larger than 2.
     if not os.path.exists(paf_file_name):                                                                       #if there is no overlap information, execute minimap2 command
-        execute_minimap_command(original_read_file_name, paf_file_name, minimap2_thread_num)                    
+        execute_minimap_command(original_read_file_name, paf_file_name, minimap2_thread_num, "ava-pb")                    
     if not os.path.exists(overlap_info_file_name):
         start = time.time()
         file_list = read_paf_file(paf_file_name)
@@ -252,6 +287,7 @@ def run(argv):
     
     list_length = int(len(NAME_CLUSTER)/process_num)
     d_cluster = thread_division(NAME_CLUSTER, process_num, list_length)
+    # print "here"
     for i in range(process_num):
         multiprocessing.Process(target=execute_file_select, args=(original_read_file_name, d_cluster, list_length*i, i)).start()
 

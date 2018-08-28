@@ -17,6 +17,7 @@ from parsing_ins_signal import *
 import logging
 from CommandRunner import *
 from extract_reads import *
+from Reads_Clustering import *
 
 USAGE="""\
 	Cluster breakpoints and extract signal & unmapped reads.
@@ -71,7 +72,7 @@ def extract_unmapped_reads(BAM, out_path):
 	from string import maketrans
 	revComp = maketrans("ATCGNatcgn","TAGCNtagcn")
 	s = pysam.Samfile(BAM)
-	file = open(out_path+"Unmapped/unmapped.fa", 'w')
+	file = open(out_path+"Unmapped/unmapped.fasta", 'w')
 	get = s
 	for read in get:
 		if read.flag != 4:
@@ -99,6 +100,9 @@ def run(argv):
 
 	extract_mapped_reads(args.temp_dir, args.input, args.output)
 	extract_unmapped_reads(args.input, args.output)
+
+	cluster_unaligned_reads(args.output+"Unmapped/", 32, "ava-pb", 50)
+
 
 	logging.info("Finished in %0.2f seconds."%(time.time() - starttime))
 
