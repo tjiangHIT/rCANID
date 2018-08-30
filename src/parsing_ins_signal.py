@@ -15,6 +15,9 @@ import sys
 import logging
 import pysam
 import cigar
+from multiprocessing import Pool
+from CommandRunner import *
+
 
 INS_flag = {1:'I'}
 DEL_flag = {2:'D'}
@@ -378,8 +381,34 @@ def single_clip(chr, Chr_length, read_evidence):
 				strength = 0
 	return Clip_list
 
+def single_pipe(sam_path, out_path, Chr_name):
+	samfile = pysam.AlignmentFile(sam_path)
+	Chr_length = samfile.get_reference_length(Chr_name)
+	# print Chr_name, Chr_length
+	logging.info("Resolving the chromsome %s."%(Chr_name))
+	if Chr_name not in CLIP_note:
+		CLIP_note[Chr_name] = dict()
+	cluster_pos_INS = list()
+	for read in samfile.fetch(Chr_name):
+		parse_read(read, Chr_name, 50)
+	Cluster_INS = single_clip(Chr_name, Chr_length, 10)
+	logging.info("%d INS signal loci in the chromsome %s."%(len(Cluster_INS), Chr_name))
 
-def load_sam(sam_path, out_path):
+	local_path = "%s_%s.txt"%(out_path, Chr_name)
+	file = open(local_path, 'w')
+	for line in Cluster_INS:
+		# breakpoint = line[0]
+		# sv_size = line[1]
+		# evidence_num = line[2]
+		read_list = "\t".join(line[4])
+		file.write("%s\t%d\t%d\t%d\t%s\n"%(line[0], line[1], line[2], line[3],read_list))
+	file.close()
+	samfile.close()
+
+def multi_run_wrapper(args):
+   return single_pipe(*args)
+
+def load_sam(sam_path, out_path, threads):
 	'''
 	Load_BAM_File
 	library:	pysam.AlignmentFile
@@ -391,7 +420,7 @@ def load_sam(sam_path, out_path):
 	# p2 = args.Output_prefix
 	# p3 = args.Reference
 	# Ref = load_ref(p3)
-
+	setupLogging(False)
 	samfile = pysam.AlignmentFile(sam_path)
 	# print(samfile.get_index_statistics())
 	contig_num = len(samfile.get_index_statistics())
@@ -399,60 +428,74 @@ def load_sam(sam_path, out_path):
 	logging.info("The total number of chromsomes: %d"%(contig_num))
 	# print("The total number of chromsomes: %d"%(contig_num))
 	# Acquire_Chr_name
-	for _num_ in xrange(contig_num):
-		Chr_name = samfile.get_reference_name(_num_)
-		logging.info("Resolving the chromsome %s."%(Chr_name))
-		# print("Resolving the chromsome %s."%(Chr_name))
-		Chr_length = samfile.lengths[_num_]
-		# print Chr_length
-		if Chr_name not in CLIP_note:
-			# CLIP_note[Chr_name] = [0] * Chr_length
-			# CLIP_note[Chr_name] = Q.PriorityQueue()
-			CLIP_note[Chr_name] = dict()
 
-		cluster_pos_INS = list()
-		# cluster_pos_DEL = list()
-		for read in samfile.fetch(Chr_name):
-			# feed_back = parse_read(read, Chr_name, 50)
-			parse_read(read, Chr_name, 50)
+	process_list = list()
+	for i in samfile.get_index_statistics():
+		process_list.append([i[0], i[3]])
+		# #chr #read
+	process_list = sorted(process_list, key = lambda x:-x[1])
+	analysis_pools = Pool(processes=int(threads))
 
-		# 	if len(feed_back) > 0:
-		# 		# print read.query_name
-		# 		for i in feed_back:
-		# 			# print i
-		# 			cluster_pos_INS.append(i)
-		# 		# break
-		# 	# if len(feed_back_del) > 0:
-		# 	# 	for i in feed_back_del:
-		# 	# 		cluster_pos_DEL.append(i)
-		# # while not CLIP_note[Chr_name].empty():
-		# # 	print Chr_name, CLIP_note[Chr_name].get()
-		# # print CLIP_note[Chr_name][6]
-		# cluster_pos_INS = sorted(cluster_pos_INS, key = lambda x:x[0])
-		# # cluster_pos_DEL = sorted(cluster_pos_DEL, key = lambda x:x[0])
-		# if len(cluster_pos_INS) == 0:
-		# 	Cluster_INS = list()
-		# else:
-		# 	# for i in cluster_pos_INS:
-		# 	# 	print i
-		# 	Cluster_INS = cluster(cluster_pos_INS, Chr_name, 5, 50, 30)
+	for i in process_list:
+		para = [(sam_path, out_path, i[0])]
+		analysis_pools.map_async(multi_run_wrapper, para)
+	analysis_pools.close()
+	analysis_pools.join()
 
-		Cluster_INS = single_clip(Chr_name, Chr_length, 10)
+	# for _num_ in xrange(contig_num):
+	# 	Chr_name = samfile.get_reference_name(_num_)
+	# 	logging.info("Resolving the chromsome %s."%(Chr_name))
+	# 	# print("Resolving the chromsome %s."%(Chr_name))
+	# 	Chr_length = samfile.lengths[_num_]
+	# 	# print Chr_length
+	# 	if Chr_name not in CLIP_note:
+	# 		# CLIP_note[Chr_name] = [0] * Chr_length
+	# 		# CLIP_note[Chr_name] = Q.PriorityQueue()
+	# 		CLIP_note[Chr_name] = dict()
 
-		logging.info("%d INS signal loci in the chromsome %s."%(len(Cluster_INS), Chr_name))		
+	# 	cluster_pos_INS = list()
+	# 	# cluster_pos_DEL = list()
+	# 	for read in samfile.fetch(Chr_name):
+	# 		# feed_back = parse_read(read, Chr_name, 50)
+	# 		parse_read(read, Chr_name, 50)
 
-		local_path = "%s_%s.txt"%(out_path, Chr_name)
-		file = open(local_path, 'w')
-		for line in Cluster_INS:
-			# breakpoint = line[0]
-			# sv_size = line[1]
-			# evidence_num = line[2]
-			read_list = "\t".join(line[4])
-			file.write("%s\t%d\t%d\t%d\t%s\n"%(line[0], line[1], line[2], line[3],read_list))
-		file.close()
+	# 	# 	if len(feed_back) > 0:
+	# 	# 		# print read.query_name
+	# 	# 		for i in feed_back:
+	# 	# 			# print i
+	# 	# 			cluster_pos_INS.append(i)
+	# 	# 		# break
+	# 	# 	# if len(feed_back_del) > 0:
+	# 	# 	# 	for i in feed_back_del:
+	# 	# 	# 		cluster_pos_DEL.append(i)
+	# 	# # while not CLIP_note[Chr_name].empty():
+	# 	# # 	print Chr_name, CLIP_note[Chr_name].get()
+	# 	# # print CLIP_note[Chr_name][6]
+	# 	# cluster_pos_INS = sorted(cluster_pos_INS, key = lambda x:x[0])
+	# 	# # cluster_pos_DEL = sorted(cluster_pos_DEL, key = lambda x:x[0])
+	# 	# if len(cluster_pos_INS) == 0:
+	# 	# 	Cluster_INS = list()
+	# 	# else:
+	# 	# 	# for i in cluster_pos_INS:
+	# 	# 	# 	print i
+	# 	# 	Cluster_INS = cluster(cluster_pos_INS, Chr_name, 5, 50, 30)
 
-		# logging.info("%d INS signal loci in the chromsome %s."%(len(Cluster_INS), Chr_name))
+	# 	Cluster_INS = single_clip(Chr_name, Chr_length, 10)
+
+	# 	logging.info("%d INS signal loci in the chromsome %s."%(len(Cluster_INS), Chr_name))		
+
+	# 	local_path = "%s_%s.txt"%(out_path, Chr_name)
+	# 	file = open(local_path, 'w')
+	# 	for line in Cluster_INS:
+	# 		# breakpoint = line[0]
+	# 		# sv_size = line[1]
+	# 		# evidence_num = line[2]
+	# 		read_list = "\t".join(line[4])
+	# 		file.write("%s\t%d\t%d\t%d\t%s\n"%(line[0], line[1], line[2], line[3],read_list))
+	# 	file.close()
+
+	# 	# logging.info("%d INS signal loci in the chromsome %s."%(len(Cluster_INS), Chr_name))
 	samfile.close()
 
 if __name__ == '__main__':
-	load_sam(sys.argv[1], sys.argv[2])
+	load_sam(sys.argv[1], sys.argv[2], sys.argv[3])

@@ -39,7 +39,7 @@ def parseArgs(argv):
 	# # parser.add_argument('-hom', '--homozygous', help = "The mininum score of a genotyping reported as a homozygous.[%(default)s]", default = 0.8, type = float)
 	# # parser.add_argument('-het','--heterozygous', help = "The mininum score of a genotyping reported as a heterozygous.[%(default)s]", default = 0.3, type = float)
 	# # parser.add_argument('-q', '--min_mapq', help = "Mininum mapping quality.[20]", default = 20, type = int)
-	# parser.add_argument('-t', '--threads', help = "Number of threads to use.[%(default)s]", default = 1, type = int)
+	parser.add_argument('-t', '--threads', help = "Number of threads to use.[%(default)s]", default = 16, type = int)
 	# parser.add_argument('-x', '--presets', help = "The sequencing type <pacbio,ont> of the reads.[%(default)s]", default = "pacbio", type = str)
 	# # parser.add_argument("--temp", type=str, default=tempfile.gettempdir(), help="Where to save temporary files")
 	# # parser.add_argument("--chunks", type=int, default=0, help="Create N scripts containing commands to each input of the fofn (%(default)s)")
@@ -94,14 +94,14 @@ def run(argv):
 	starttime = time.time()
 
 	if args.temp_dir[-1] == '/':
-		load_sam(args.input, args.temp_dir)
+		load_sam(args.input, args.temp_dir, args.threads)
 	else:
-		load_sam(args.input, args.temp_dir+'/')
+		load_sam(args.input, args.temp_dir+'/', args.threads)
 
 	extract_mapped_reads(args.temp_dir, args.input, args.output)
 	extract_unmapped_reads(args.input, args.output)
 
-	cluster_unaligned_reads(args.output+"Unmapped/", 32, "ava-pb", 50)
+	cluster_unaligned_reads(args.output+"Unmapped/", args.threads, "ava-pb", 50)
 
 
 	logging.info("Finished in %0.2f seconds."%(time.time() - starttime))
