@@ -82,11 +82,13 @@ def parse_read_final(read, low_bandary):
 	# read.query_name
 	qname = read.query_name
 	# if int(qname.split('_')[2].split('=')[1]) < 10:
-	if qname.split('_')[5][-1] == 'm':
-		# return INS_pos
-		evidence_tag = 'w'
-	else:
-		evidence_tag = 's'
+	# if qname.split('_')[5][-1] == 'm':
+	# 	# return INS_pos
+	# 	evidence_tag = 'w'
+	# else:
+	# 	evidence_tag = 's'
+
+	evidence_tag = ''
 
 	pos_start = read.reference_start
 	shift = 0
