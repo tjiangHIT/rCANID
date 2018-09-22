@@ -1,5 +1,5 @@
 # rCANID: 
-rCANID - read Clustering and Assembliy-based Novel insertion Detection tool
+rCANID - read Clustering and Assembly-based Novel insertion Detection tool
 
 ---
 ### Getting Start
